@@ -12,9 +12,12 @@ from typing import Sequence, Tuple, Optional, Dict, List
 
 from cam_site_builder import CamData, PictureData
 
-FOLDER_DEPTH_YEAR = 1
-FOLDER_DEPTH_MONTH = 2
-FOLDER_DEPTH = 3
+IMAGES_DIRECTORY = "images"
+"""The image directory in the web root."""
+
+_FOLDER_DEPTH_YEAR = 1
+_FOLDER_DEPTH_MONTH = 2
+_FOLDER_DEPTH = 3
 
 
 def split(filename: str, year: str, month: str, day: str) -> Optional[Tuple[str, str, str]]:
@@ -122,11 +125,11 @@ def collect_images(camera_path: str) -> CamData:
 
     for directory in walk(camera_path):
         print("Found: {}".format(directory))
-        if directory[0].count(sep) == separator_count + FOLDER_DEPTH_YEAR:
+        if directory[0].count(sep) == separator_count + _FOLDER_DEPTH_YEAR:
             year = path.basename(path.normpath(directory[0]))
-        if directory[0].count(sep) == separator_count + FOLDER_DEPTH_MONTH:
+        if directory[0].count(sep) == separator_count + _FOLDER_DEPTH_MONTH:
             month = path.basename(path.normpath(directory[0]))
-        if directory[0].count(sep) == separator_count + FOLDER_DEPTH:
+        if directory[0].count(sep) == separator_count + _FOLDER_DEPTH:
             print("Iterating files in {}".format(directory[0]))
             day = path.basename(path.normpath(directory[0]))
             cam_data = extract_by_type(directory[2], year, month, day)
@@ -150,7 +153,6 @@ def load_cam_data(root: str, cameras: Sequence[str]) -> Dict[str, CamData]:
     def load_camera_with_logging(camera: str) -> CamData:
         images = collect_images(path.join(root, camera))
         print("Found {} images".format(len(images[1])))
-        print(images)
         return images
 
     cam_data = {path.join(root, camera): load_camera_with_logging(camera) for camera in cameras}
@@ -197,7 +199,6 @@ def _combine_proximate(contents: Sequence[PictureData]) -> Sequence[Sequence[Pic
     :return: list of entries belonging together
     """
     result = []
-    print("Combine {} pictures".format(contents))
     candidate = None
 
     skip_count = 0
@@ -219,10 +220,10 @@ def _combine_proximate(contents: Sequence[PictureData]) -> Sequence[Sequence[Pic
     return result
 
 
-def _build_path(root: str, picture: PictureData) -> str:
+def build_path(root: str, picture: PictureData) -> str:
     """Returns the path to a picture
 
-    >>> _build_path("root/dir", PictureData(datetime(2021, 3, 9, 16, 44, 20), []))
+    >>> build_path("root/dir", PictureData(datetime(2021, 3, 9, 16, 44, 20), []))
     'root/dir/2021/03/09'
 
     :param root: the output root directory
@@ -232,10 +233,10 @@ def _build_path(root: str, picture: PictureData) -> str:
     return path.join(root, picture.time.strftime('%Y'), picture.time.strftime('%m'), picture.time.strftime('%d'))
 
 
-def _build_file_name(cam_name: str, picture: PictureData) -> str:
+def build_file_name(cam_name: str, picture: PictureData) -> str:
     """Builds the file name without suffix.
 
-    >>> _build_file_name("Camera", PictureData(datetime(2021, 3, 9, 16, 44, 20), []))
+    >>> build_file_name("Camera", PictureData(datetime(2021, 3, 9, 16, 44, 20), []))
     'Camera_20210309164420'
 
     :param cam_name: the name of the camera
@@ -258,16 +259,16 @@ def create_symlink(root: str, web_root: str, cam_name: str, pictures: Sequence[P
     """
     symlink_defining_picture = pictures[0]
 
-    symlinks_root = path.join("images", path.basename(root))
-    symlinks_file_relative = _build_path(symlinks_root, symlink_defining_picture)
-    symlinks_file_name = _build_file_name(cam_name, symlink_defining_picture)
+    symlinks_root = path.join(IMAGES_DIRECTORY, path.basename(root))
+    symlinks_file_relative = build_path(symlinks_root, symlink_defining_picture)
+    symlinks_file_name = build_file_name(cam_name, symlink_defining_picture)
 
     for picture in pictures:
         for file_type in picture.types:
             symlink_file = path.join(web_root, symlinks_file_relative, symlinks_file_name + "." + file_type)
 
-            original_image_path = _build_path(root, picture)
-            original_image_file_name = _build_file_name(cam_name, picture)
+            original_image_path = build_path(root, picture)
+            original_image_file_name = build_file_name(cam_name, picture)
             original_image_symlink = path.join(original_image_path, original_image_file_name + "." + file_type)
 
             try:
@@ -299,6 +300,5 @@ def create_symlinks(root: str, cam_data: CamData, web_root: str) -> CamData:
 
     updated_pictures = []
     for pictures in merged_images:
-        print("Creating symlink for {}".format(pictures))
         updated_pictures.append(create_symlink(root, web_root, cam_data.name, pictures))
     return CamData(cam_data.name, updated_pictures)
