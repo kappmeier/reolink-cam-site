@@ -10,7 +10,7 @@ from os import makedirs, path, sep, symlink, walk
 from re import compile
 from typing import Sequence, Tuple, Optional, Dict, List
 
-from cam_site_builder import CamData, PictureData
+from cam_site_data import CamData, PictureData
 
 IMAGES_DIRECTORY = "images"
 """The image directory in the web root."""
