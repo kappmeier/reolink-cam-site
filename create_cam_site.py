@@ -1,7 +1,7 @@
 """Main file to create a static cam site page.
 
 The script expects a prepared directory with images and thumbnails as produced by the
-create_cam_site.py script.
+prepare_cam_site.py script.
 
 Usage:
   create_cam_site.py --name "My CamSite" --dir ./out --cameras camera-front camera-back
