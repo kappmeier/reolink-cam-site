@@ -2,7 +2,7 @@
 
 """
 from datetime import datetime
-from typing import NamedTuple, Sequence
+from typing import NamedTuple, Sequence, Optional
 
 
 class PictureData(NamedTuple):
@@ -21,7 +21,10 @@ class CamData(NamedTuple):
     """
 
     """
-    name: str
-    """The camera name."""
+    name: Optional[str]
+    """The camera name.
+
+    `None` for invalid data.
+    """
     contents: Sequence[PictureData]
     """List of sorted snapshots for the camera."""

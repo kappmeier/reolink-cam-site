@@ -59,8 +59,8 @@ def extract_by_type(files: Sequence[str], year: str, month: str, day: str) -> Ca
     The output is converted to chunks with the same time code, provided with a
     list of type suffices.
 
-    >>> test_files = ["Cam_20210313090000.jpg", "Cam_20210313090000.mp4",\
-                      "Cam_20210313090523.jpg",\
+    >>> test_files = ["Cam_20210313090000.jpg", "Cam_20210313090000.mp4", \
+                      "Cam_20210313090523.jpg", \
                       "Cam_20210313090524.mp4"]
     >>> result = extract_by_type(test_files, "2021", "03", "13")
     >>> result.name
@@ -78,6 +78,13 @@ def extract_by_type(files: Sequence[str], year: str, month: str, day: str) -> Ca
     >>> extract_by_type(test_files, "2021", "03", "13")
     CamData(name='Cam', contents=[PictureData(time=datetime.datetime(2021, 3, 13, 9, 0), types=['jpg'])])
 
+    In case of empty or unrelated directories a special dummy cam data object is returned:
+
+    >>> extract_by_type([], "2021", "03", "13")
+    CamData(name=None, contents=[])
+    >>> extract_by_type(["some_other_data.txt"], "2021", "03", "13")
+    CamData(name=None, contents=[])
+
     :param files: the list of files
     :param day: the date for which pictures are collected
     :param month: the month for which pictures are collected
@@ -88,8 +95,10 @@ def extract_by_type(files: Sequence[str], year: str, month: str, day: str) -> Ca
 
     prefix = set([element[0] for element in valid])
 
-    if len(prefix) != 1:
+    if len(prefix) > 1:
         raise ValueError("Illegal files found, more than one Prefix: {}".format(prefix))
+    elif len(prefix) == 0:
+        return CamData(None, [])
 
     # Reduce to timestamp and suffix
     as_tuple = [(_as_datetime(element[1]), element[2]) for element in valid]
@@ -133,7 +142,9 @@ def collect_images(camera_path: str) -> CamData:
             print("Iterating files in {}".format(directory[0]))
             day = path.basename(path.normpath(directory[0]))
             cam_data = extract_by_type(directory[2], year, month, day)
-            if result_name is None:
+            if cam_data.name is None or len(cam_data.contents) == 0:
+                print("No files in {}".format(directory[0]))
+            elif result_name is None:
                 result_name = cam_data.name
             elif result_name != cam_data.name:
                 raise Exception("Invalid files found with prefixes {} and {}".format(result_name, cam_data.name))
