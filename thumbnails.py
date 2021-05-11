@@ -39,14 +39,16 @@ def create_thumbnail(root: str, web_root: str, cam_name: str, picture: PictureDa
         image.save(target_file)
 
 
-def create_thumbnails(root: str, cam_data: CamData, web_root: str, skip_existing: bool = True):
+def create_thumbnails(root: str, cam_data: CamData, web_root: str, skip_existing: bool = True) -> None:
     """Creates all thumbnails for pictures
 
     :param root: the root of the camera
     :param cam_data:
     :param web_root: the root directory of the web output
     :param skip_existing: skip existing to speed up process
-    :return:
     """
     for pictures in cam_data.contents:
-        create_thumbnail(root, web_root, cam_data.name, pictures, skip_existing)
+        try:
+            create_thumbnail(root, web_root, cam_data.name, pictures, skip_existing)
+        except Exception as e:
+            print("Error creating thumbnail for '{}': {}".format(pictures, e))
