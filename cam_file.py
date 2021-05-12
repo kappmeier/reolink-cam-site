@@ -4,7 +4,7 @@ Parsing directory structure from Reolink, extracting time stamps, file types
 and creating web-site relevant data.
 """
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, date
 from itertools import chain
 from os import makedirs, path, sep, symlink, walk
 from re import compile
@@ -20,19 +20,17 @@ _FOLDER_DEPTH_MONTH = 2
 _FOLDER_DEPTH = 3
 
 
-def split(filename: str, year: str, month: str, day: str) -> Optional[Tuple[str, str, str]]:
+def split(filename: str, for_date: date) -> Optional[Tuple[str, str, str]]:
     """Splits a filename as created by Reolink into its parts.
 
-    >>> split("Camera BE_01_20210315004528.jpg", "2021", "03", "15")
+    >>> split("Camera BE_01_20210315004528.jpg", date(2021, 3, 15))
     ('Camera BE_01', '20210315004528', 'jpg')
 
     :param filename: the complete filename
-    :param year: year of the file
-    :param month: month of the file
-    :param day: day of the file
+    :param for_date: year, month, and day of the file
     :return: a tuple of the camera name, the timestamp, and the type suffix
     """
-    pattern = "(.*)_({0}{1}{2}[0-9]{{6}}).(jpg|mp4)".format(year, month, day)
+    pattern = "(.*)_({0:02d}{1:02d}{2:02d}[0-9]{{6}}).(jpg|mp4)".format(for_date.year, for_date.month, for_date.day)
     regex = compile(pattern)
     match = regex.match(filename)
 
@@ -53,7 +51,7 @@ def _as_datetime(time_code: str) -> datetime:
     return datetime.strptime(time_code, '%Y%m%d%H%M%S')
 
 
-def extract_by_type(files: Sequence[str], year: str, month: str, day: str) -> CamData:
+def extract_by_type(files: Sequence[str], for_date: date) -> CamData:
     """Converts a file list into camera data.
 
     The output is converted to chunks with the same time code, provided with a
@@ -62,7 +60,7 @@ def extract_by_type(files: Sequence[str], year: str, month: str, day: str) -> Ca
     >>> test_files = ["Cam_20210313090000.jpg", "Cam_20210313090000.mp4", \
                       "Cam_20210313090523.jpg", \
                       "Cam_20210313090524.mp4"]
-    >>> result = extract_by_type(test_files, "2021", "03", "13")
+    >>> result = extract_by_type(test_files, date(2021, 3, 13))
     >>> result.name
     'Cam'
     >>> result.contents[0]
@@ -75,23 +73,21 @@ def extract_by_type(files: Sequence[str], year: str, month: str, day: str) -> Ca
     Input files that are on a different date are ignored.
 
     >>> test_files = ["Cam_20210313090000.jpg", "Cam_20210314090000.mp4"]
-    >>> extract_by_type(test_files, "2021", "03", "13")
+    >>> extract_by_type(test_files, date(2021, 3, 13))
     CamData(name='Cam', contents=[PictureData(time=datetime.datetime(2021, 3, 13, 9, 0), types=['jpg'])])
 
     In case of empty or unrelated directories a special dummy cam data object is returned:
 
-    >>> extract_by_type([], "2021", "03", "13")
+    >>> extract_by_type([], date(2021, 3, 13))
     CamData(name=None, contents=[])
-    >>> extract_by_type(["some_other_data.txt"], "2021", "03", "13")
+    >>> extract_by_type(["some_other_data.txt"], date(2021, 3, 13))
     CamData(name=None, contents=[])
 
     :param files: the list of files
-    :param day: the date for which pictures are collected
-    :param month: the month for which pictures are collected
-    :param year: the year for which pictures are collected
+    :param for_date: the year, month, and day for which pictures are collected
     :return: a compiled `CamData` object with a list of all files
     """
-    valid = [x for x in [split(filename, year, month, day) for filename in files] if x is not None]
+    valid = [x for x in [split(filename, for_date) for filename in files] if x is not None]
 
     prefix = set([element[0] for element in valid])
 
@@ -133,15 +129,15 @@ def collect_images(camera_path: str) -> CamData:
     month = None
 
     for directory in walk(camera_path):
-        print("Found: {}".format(directory))
+        print("Found directory {} with {} files".format(directory[0], len(directory[2])))
         if directory[0].count(sep) == separator_count + _FOLDER_DEPTH_YEAR:
-            year = path.basename(path.normpath(directory[0]))
+            year = int(path.basename(path.normpath(directory[0])))
         if directory[0].count(sep) == separator_count + _FOLDER_DEPTH_MONTH:
-            month = path.basename(path.normpath(directory[0]))
+            month = int(path.basename(path.normpath(directory[0])))
         if directory[0].count(sep) == separator_count + _FOLDER_DEPTH:
             print("Iterating files in {}".format(directory[0]))
-            day = path.basename(path.normpath(directory[0]))
-            cam_data = extract_by_type(directory[2], year, month, day)
+            day = int(path.basename(path.normpath(directory[0])))
+            cam_data = extract_by_type(directory[2], date(year, month, day))
             if cam_data.name is None or len(cam_data.contents) == 0:
                 print("No files in {}".format(directory[0]))
             elif result_name is None:
@@ -152,6 +148,11 @@ def collect_images(camera_path: str) -> CamData:
     return CamData(result_name, result_list)
 
 
+def _load_cam_data(root: str, cameras: Sequence[str]) -> Dict[str, CamData]:
+    pass
+
+
+# /* , for_date: date */
 def load_cam_data(root: str, cameras: Sequence[str]) -> Dict[str, CamData]:
     """Loads all pictures for multiple cameras in a root directory.
 
