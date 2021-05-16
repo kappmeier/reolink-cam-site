@@ -8,7 +8,7 @@ from datetime import datetime, date
 from itertools import chain
 from os import makedirs, path, sep, symlink, walk
 from re import compile
-from typing import Sequence, Tuple, Optional, Dict, List
+from typing import Sequence, Tuple, Optional, Dict, List, Iterator
 
 from cam_site_data import CamData, PictureData
 
@@ -50,6 +50,8 @@ def _as_datetime(time_code: str) -> datetime:
     """
     return datetime.strptime(time_code, '%Y%m%d%H%M%S')
 
+
+# def extract_by_type(files: Sequence[str], year: str, month: str, day: str) -> CamData:
 
 def extract_by_type(files: Sequence[str], for_date: date) -> CamData:
     """Converts a file list into camera data.
@@ -106,14 +108,12 @@ def extract_by_type(files: Sequence[str], for_date: date) -> CamData:
     return CamData(next(iter(prefix)), [PictureData(time, types) for time, types in sorted(as_dict.items())])
 
 
-def collect_images(camera_path: str) -> CamData:
-    """Collects all picture in a given path.
+def _iterate_image_directories(camera_path: str) -> Iterator[Tuple[Sequence[str], date]]:
+    """Iterates images in sub directories per date.
 
-    The files are collected in subdirectories `camera_path/year/month/day` and
-    assembled together into a `CamData` object.
-
-    It is assumed that all files have the same camera name as prefix, otherwise
-    an `Exception` will be raised.
+    All sub directories of the form `camera_path/year/month/day` are iterated.
+    The yielded result contains all files in a directory together with its
+    date.
 
     :param camera_path: the root path for pictures
     :return: the constructed object holding all pictures
@@ -121,9 +121,6 @@ def collect_images(camera_path: str) -> CamData:
     print("Iterating {}".format(camera_path))
 
     separator_count = camera_path.count(sep)
-
-    result_name = None
-    result_list = []
 
     year = None
     month = None
@@ -137,19 +134,74 @@ def collect_images(camera_path: str) -> CamData:
         if directory[0].count(sep) == separator_count + _FOLDER_DEPTH:
             print("Iterating files in {}".format(directory[0]))
             day = int(path.basename(path.normpath(directory[0])))
-            cam_data = extract_by_type(directory[2], date(year, month, day))
-            if cam_data.name is None or len(cam_data.contents) == 0:
-                print("No files in {}".format(directory[0]))
-            elif result_name is None:
-                result_name = cam_data.name
-            elif result_name != cam_data.name:
-                raise Exception("Invalid files found with prefixes {} and {}".format(result_name, cam_data.name))
-            result_list.extend(cam_data.contents)
+            yield directory[2], date(year, month, day)
+
+
+def _collect_images(image_groups: Iterator[Tuple[Sequence[str], date]]) -> CamData:
+    """Converts groups of pictures into CamData object.
+
+    The pictures are grouped by date and passed as an iterable. The date
+    belonging to each group is used to derive the ReoLink path under which the
+    images are located.
+
+    >>> images_1 = ["Cam_20210508090000.jpg", "Cam_20210508090000.mp4"], date(2021, 5, 8)
+    >>> images_2 = ["Cam_20210509090000.jpg", "Cam_20210509091010.jpg"], date(2021, 5, 9)
+    >>> result = _collect_images([images_1, images_2])
+    Collecting 2 images for 2021-05-08
+    Collecting 2 images for 2021-05-09
+
+    All file names that are passed must follow the REoLink pattern and the
+    camera prefix must be the same for all iterated files, otherwise an
+    exception is thrown.
+
+    >>> result.name
+    'Cam'
+
+    The above example contains two files for 2021-05-08 for the same time of
+    different type:
+
+    >>> result.contents[0]
+    PictureData(time=datetime.datetime(2021, 5, 8, 9, 0), types=['jpg', 'mp4'])
+
+    The images for the second date (2021-05-09) are for different times:
+
+    >>> result.contents[1]
+    PictureData(time=datetime.datetime(2021, 5, 9, 9, 0), types=['jpg'])
+    >>> result.contents[2]
+    PictureData(time=datetime.datetime(2021, 5, 9, 9, 10, 10), types=['jpg'])
+
+    :param image_groups: iterable collection of pictures for a date
+    :return: the data combined into a CamData object
+    """
+    result_name = None
+    result_list = []
+
+    for files, for_date in image_groups:
+        print("Collecting {} images for {}".format(len(files), for_date))
+        cam_data = extract_by_type(files, for_date)
+        if cam_data.name is None or len(cam_data.contents) == 0:
+            print("No files in {}".format(files))
+        elif result_name is None:
+            result_name = cam_data.name
+        elif result_name != cam_data.name:
+            raise Exception("Invalid files found with prefixes {} and {}".format(result_name, cam_data.name))
+        result_list.extend(cam_data.contents)
     return CamData(result_name, result_list)
 
 
-def _load_cam_data(root: str, cameras: Sequence[str]) -> Dict[str, CamData]:
-    pass
+def collect_images(camera_path: str) -> CamData:
+    """Collects all picture in a given root path.
+
+    The files are searched in subdirectories `camera_path/year/month/day` and
+    collected into a `CamData` object.
+
+    It is assumed that all files have the same camera name as prefix, otherwise
+    an `Exception` will be raised.
+
+    :param camera_path: the root path for pictures
+    :return: the constructed object holding all pictures
+    """
+    return _collect_images(_iterate_image_directories(camera_path))
 
 
 # /* , for_date: date */
