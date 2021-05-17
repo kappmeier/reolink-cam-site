@@ -6,8 +6,9 @@ prepare_cam_site.py script.
 Usage:
   create_cam_site.py --name "My CamSite" --dir ./out --cameras camera-front camera-back
 """
+from datetime import date
 from os import path
-from typing import Sequence, List
+from typing import List, Sequence, Optional
 
 from tap import Tap
 
@@ -28,6 +29,13 @@ class CreateCamArgumentParser(Tap):
     """The cameras are directory names in the `images` and `thumbnails`
     directories. They are the same as used as input for the preparation script.
     """
+    date: Optional[date]  # Load images for a certain date.
+    """The date is specified in ISO format `YYYY-MM-DD`.
+    """
+
+    def configure(self):
+        """Define complex parameters."""
+        self.add_argument('--date', required=False, type=date.fromisoformat)
 
 
 def _get_arguments() -> CreateCamArgumentParser:
@@ -36,13 +44,13 @@ def _get_arguments() -> CreateCamArgumentParser:
     return parsed_args
 
 
-def create_cam_site(project_name: str, web_root: str, cameras: Sequence[str]):
+def create_cam_site(project_name: str, web_root: str, cameras: Sequence[str], cam_data_for: Optional[date]):
     """
 
     :return:
     """
     image_root = path.join(web_root, IMAGES_DIRECTORY)
-    cam_data = load_cam_data(image_root, cameras)
+    cam_data = load_cam_data(image_root, cameras, cam_data_for)
 
     print("Creating website for {} cameras".format(len(cam_data)))
 
@@ -56,4 +64,4 @@ def create_cam_site(project_name: str, web_root: str, cameras: Sequence[str]):
 
 if __name__ == '__main__':
     args = _get_arguments()
-    create_cam_site(args.name, args.dir, args.cameras)
+    create_cam_site(args.name, args.dir, args.cameras, args.date)
