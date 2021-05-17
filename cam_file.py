@@ -8,7 +8,7 @@ from datetime import datetime, date
 from itertools import chain
 from os import makedirs, path, sep, symlink, walk
 from re import compile
-from typing import Sequence, Tuple, Optional, Dict, List, Iterator
+from typing import Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 from cam_site_data import CamData, PictureData
 
@@ -50,8 +50,6 @@ def _as_datetime(time_code: str) -> datetime:
     """
     return datetime.strptime(time_code, '%Y%m%d%H%M%S')
 
-
-# def extract_by_type(files: Sequence[str], year: str, month: str, day: str) -> CamData:
 
 def extract_by_type(files: Sequence[str], for_date: date) -> CamData:
     """Converts a file list into camera data.
@@ -189,7 +187,7 @@ def _collect_images(image_groups: Iterator[Tuple[Sequence[str], date]]) -> CamDa
     return CamData(result_name, result_list)
 
 
-def collect_images(camera_path: str) -> CamData:
+def collect_images(camera_path: str, for_date: date = None) -> CamData:
     """Collects all picture in a given root path.
 
     The files are searched in subdirectories `camera_path/year/month/day` and
@@ -199,24 +197,36 @@ def collect_images(camera_path: str) -> CamData:
     an `Exception` will be raised.
 
     :param camera_path: the root path for pictures
+    :param for_date: optional date for image collection
     :return: the constructed object holding all pictures
     """
-    return _collect_images(_iterate_image_directories(camera_path))
+    if for_date:
+        picture_path = build_path(camera_path, for_date)
+        _, _, filenames = next(walk(picture_path))
+        images = filenames, for_date
+        return _collect_images([images])
+    else:
+        return _collect_images(_iterate_image_directories(camera_path))
 
 
-# /* , for_date: date */
-def load_cam_data(root: str, cameras: Sequence[str]) -> Dict[str, CamData]:
+def load_cam_data(root: str, cameras: Sequence[str], for_date: date = None) -> Dict[str, CamData]:
     """Loads all pictures for multiple cameras in a root directory.
 
     Each camera data is expected to reside in its own directory with structure
     `root/camera_root/year/month/day/pictures.{jpg,mp4}`.
 
+    If the date is present, only images for the specified date are loaded.
+    Otherwise the whole directory is traversed.
+
+    :param root: root directory for the camera data
+    :param cameras: cameras for image loading, subdirectories in the root
+    :param for_date: optional date for image loading
     :return: dictionary of paths to compiled `CamData` objects
     """
 
     def load_camera_with_logging(camera: str) -> CamData:
-        images = collect_images(path.join(root, camera))
-        print("Found {} images".format(len(images[1])))
+        images = collect_images(path.join(root, camera), for_date)
+        print("Found {} images for {}".format(len(images[1]), camera))
         return images
 
     cam_data = {path.join(root, camera): load_camera_with_logging(camera) for camera in cameras}
@@ -284,7 +294,7 @@ def _combine_proximate(contents: Sequence[PictureData]) -> Sequence[Sequence[Pic
     return result
 
 
-def build_path(root: str, picture: PictureData) -> str:
+def build_path(root: str, picture: Union[PictureData, date]) -> str:
     """Returns the path to a picture
 
     >>> build_path("root/dir", PictureData(datetime(2021, 3, 9, 16, 44, 20), []))
@@ -294,7 +304,14 @@ def build_path(root: str, picture: PictureData) -> str:
     :param picture: the picture file for which the path is constructed
     :return: the path to the file relative to the root dir
     """
-    return path.join(root, picture.time.strftime('%Y'), picture.time.strftime('%m'), picture.time.strftime('%d'))
+
+    def build_path_from_date(picture_time: date) -> str:
+        return path.join(root, picture_time.strftime('%Y'), picture_time.strftime('%m'), picture_time.strftime('%d'))
+
+    if isinstance(picture, PictureData):
+        return build_path_from_date(picture.time)
+    else:
+        return build_path_from_date(picture)
 
 
 def build_file_name(cam_name: str, picture: PictureData) -> str:
