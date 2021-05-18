@@ -316,7 +316,21 @@ class CamSiteBuilder:
             f.write(doc.render())
 
     @staticmethod
-    def _add_date(parent: div, to_add: date):
+    def _add_date(parent: div, to_add: date) -> None:
+        """Adds a link to an archive page for a date.
+
+        >>> parent_entity = div()
+        >>> CamSiteBuilder._add_date(parent_entity, date(2021, 3, 21))
+        >>> print(parent_entity)
+        <div>
+          <p>
+            <a href="2021-03-21.html">2021-03-21</a>
+          </p>
+        </div>
+
+        :param parent:
+        :param to_add:
+        """
         link_text = to_add.strftime('%Y-%m-%d')
         link_url = date_site_name(to_add)
         with parent:
