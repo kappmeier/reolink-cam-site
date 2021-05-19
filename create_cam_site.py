@@ -59,7 +59,7 @@ def create_cam_site(project_name: str, web_root: str, cameras: Sequence[str], ca
 
     builder = CamSiteBuilder(project_name, web_root, cam_data)
 
-    builder.create_main_site()
+    builder.create_full_site()
 
 
 if __name__ == '__main__':

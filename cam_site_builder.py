@@ -2,7 +2,7 @@
 """
 from datetime import datetime, date, timedelta
 from os import path
-from typing import Dict, Optional, Sequence, Collection
+from typing import Collection, Dict, Optional, Sequence
 
 from dominate import document
 from dominate.tags import a, div, h1, img, h2, p
@@ -255,6 +255,7 @@ class CamSiteBuilder:
         self.cam_data_sets = self._rounded_cam_data(cam_data_sets, round_to_minutes)
         self.project_name = project_name
         self.output_directory = output_directory
+        self.archive_pages = []
         """The directory which holds created thumbnails."""
 
     @staticmethod
@@ -262,58 +263,110 @@ class CamSiteBuilder:
         return {key: CamData(value.name, sorted(round_to(value.contents, to_minutes))) for key, value in
                 cam_data_sets.items()}
 
-    def create_main_site(self) -> None:
-        """Creates the landing page.
-        """
-        doc = document(self.project_name)
-        doc.add(h1("Almost live view"))
+    def _create_live_block(self) -> ImageBlock:
+        """Creates an image block for the title page.
 
+        The image block contains the latest picture for each camera.
+
+        :return: an `ImageBlock` instance with the latest images
+        """
         new_block = ImageBlock(datetime.now(), self.cam_data_sets.keys(), style='full')
         for camera_root, cam_data in self.cam_data_sets.items():
             current_picture = cam_data.contents[-1]
             parent_block = new_block.picture_div(camera_root)
             _add_image(parent_block, camera_root, cam_data.name, current_picture, use_thumbnail=False)
+        return new_block
+
+    def create_full_site(self) -> None:
+        """Creates the full cam site.
+
+        Builds the landing page and archive pages for all available images.
+        """
+        doc = document(self.project_name)
+        doc.add(h1("Almost live view"))
+
+        new_block = self._create_live_block()
         doc.add(new_block.parent_div)
 
         doc.add(h1("Archive"))
         list_block = div()
         doc.add(list_block)
 
+        self.create_archive_pages()
+        for active_date in sorted(self.archive_pages):
+            self._add_date(list_block, active_date)
+
+        with open(path.join(self.output_directory, 'index.html'), 'w') as f:
+            f.write(doc.render())
+
+    def create_archive_pages(self) -> None:
+        """Builds all archive pages for the available images.
+
+        Iterates all image files, aggregates per date and builds an archive
+        site for each date.
+
+        An entry for all dates with data is added to the list of archive pages.
+        """
         # Create iterators
         indices = {}
         for camera_root, _ in self.cam_data_sets.items():
             indices[camera_root] = 0
 
         active_date = get_active_date(indices, self.cam_data_sets)
-        current_date_site_builder = DateSiteBuilder(self.project_name, active_date, self.cam_data_sets.keys(),
-                                                    self.output_directory)
-
-        while indices:
-            # Grab next pictures, if on current date
-            pictures_to_add = {}
-            to_be_deleted = []
-            for key, value in indices.items():
-                if self.cam_data_sets[key].contents[value].time.date() == active_date:
-                    pictures_to_add[key] = self.cam_data_sets[key].contents[value]
-                    indices[key] += 1
-                    if indices[key] == len(self.cam_data_sets[key].contents):
-                        to_be_deleted.append(key)
-            for key in to_be_deleted:
-                del indices[key]
-            for cam, picture in pictures_to_add.items():
-                current_date_site_builder.add(self.cam_data_sets[cam].name, cam, picture)
-
-            # Update indices
-            next_date = get_active_date(indices, self.cam_data_sets)
+        date_site_builder = self._next_archive_builder(active_date)
+        while active_date:
+            next_date = self._handle_date(indices, active_date, date_site_builder)
             if next_date != active_date:
-                current_date_site_builder.write()
-                self._add_date(list_block, active_date)
+                date_site_builder.write()
                 active_date = next_date
-                current_date_site_builder = DateSiteBuilder(self.project_name, active_date, self.cam_data_sets.keys(),
-                                                            self.output_directory)
+                date_site_builder = self._next_archive_builder(active_date)
 
-        with open(path.join(self.output_directory, 'index.html'), 'w') as f:
-            f.write(doc.render())
+    def _next_archive_builder(self, next_date: date) -> Optional[DateSiteBuilder]:
+        """Prepares builder for the archive page for a date.
+
+        Creates a `DateSiteBuilder` instance for the given date. When the input
+        is `None`, no builder is returned.
+
+        As a side effect, the date is added to the list of archive pages.
+
+        :param next_date: the date for which the archive is built
+        :return: the builder for the archive page
+        """
+        if next_date:
+            self.archive_pages.append(next_date)
+            return DateSiteBuilder(self.project_name, next_date, self.cam_data_sets.keys(), self.output_directory)
+        else:
+            return None
+
+    def _handle_date(self, indices: Dict[str, int], active_date: date, archive_page_builder: DateSiteBuilder) \
+            -> Optional[date]:
+        """Iterates over camera contents and adds images to a builder.
+
+        Takes images for the passed active date and adds it to the archive page
+        builder. The indices are used as a counter to decide when a date is
+        completely handled.
+
+        :param indices: the dates not yet completely handled
+        :param active_date: the date that is currently handled
+        :param archive_page_builder: the builder for the archive page for the active date
+        :return: the next active date, can be the same or another date
+        """
+        # Grab next pictures, if on current date
+        pictures_to_add = {}
+        to_be_deleted = []
+        for key, value in indices.items():
+            if self.cam_data_sets[key].contents[value].time.date() == active_date:
+                pictures_to_add[key] = self.cam_data_sets[key].contents[value]
+                indices[key] += 1
+                if indices[key] == len(self.cam_data_sets[key].contents):
+                    to_be_deleted.append(key)
+        for key in to_be_deleted:
+            del indices[key]
+        for cam, picture in pictures_to_add.items():
+            archive_page_builder.add(self.cam_data_sets[cam].name, cam, picture)
+
+        # Update indices
+        return get_active_date(indices, self.cam_data_sets)
 
     @staticmethod
     def _add_date(parent: div, to_add: date) -> None:
