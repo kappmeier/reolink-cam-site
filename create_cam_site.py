@@ -59,6 +59,8 @@ def create_cam_site(project_name: str, web_root: str, cameras: Sequence[str], ca
 
     builder = CamSiteBuilder(project_name, web_root, cam_data)
 
+    if cam_data_for:
+        builder.load_archive_pages()
     builder.create_full_site()
 
 

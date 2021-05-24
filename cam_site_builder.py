@@ -1,7 +1,7 @@
 """Creates the actual cam site.
 """
 from datetime import datetime, date, timedelta
-from os import path
+from os import path, listdir
 from typing import Collection, Dict, Optional, Sequence
 
 from dominate import document
@@ -255,13 +255,33 @@ class CamSiteBuilder:
         self.cam_data_sets = self._rounded_cam_data(cam_data_sets, round_to_minutes)
         self.project_name = project_name
         self.output_directory = output_directory
-        self.archive_pages = []
+        self.archive_pages = set()
         """The directory which holds created thumbnails."""
 
     @staticmethod
     def _rounded_cam_data(cam_data_sets: Dict[str, CamData], to_minutes: int) -> Dict[str, CamData]:
         return {key: CamData(value.name, sorted(round_to(value.contents, to_minutes))) for key, value in
                 cam_data_sets.items()}
+
+    def load_archive_pages(self) -> None:
+        """Loads existing archive pages.
+
+        Finds all archive pages (named YYYY-MM-DD.html) in the root directory
+        and adds it to the known archive pages.
+
+        Consecutive calls to build the main page will include these pages.
+        """
+        print("Searching existing archive directories in {}".format(self.output_directory))
+
+        def is_date_file(file_name: str) -> bool:
+            try:
+                datetime.strptime(file_name, '%Y-%m-%d.html')
+                return True
+            except ValueError:
+                return False
+
+        self.archive_pages |= {datetime.strptime(candidate_file, '%Y-%m-%d.html').date()
+                               for candidate_file in listdir(self.output_directory) if is_date_file(candidate_file)}
 
     def _create_live_block(self) -> ImageBlock:
         """Creates an image block for the title page.
@@ -333,7 +353,7 @@ class CamSiteBuilder:
         :return: the builder for the archive page
         """
         if next_date:
-            self.archive_pages.append(next_date)
+            self.archive_pages.add(next_date)
             return DateSiteBuilder(self.project_name, next_date, self.cam_data_sets.keys(), self.output_directory)
         else:
             return None
