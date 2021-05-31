@@ -252,7 +252,8 @@ class CamSiteBuilder:
 
         """
         # Round
-        self.cam_data_sets = self._rounded_cam_data(cam_data_sets, round_to_minutes)
+        self.cam_data_sets = cam_data_sets
+        self.rounded_cam_data_sets = self._rounded_cam_data(cam_data_sets, round_to_minutes)
         self.project_name = project_name
         self.output_directory = output_directory
         self.archive_pages = set()
@@ -329,10 +330,10 @@ class CamSiteBuilder:
         """
         # Create iterators
         indices = {}
-        for camera_root, _ in self.cam_data_sets.items():
+        for camera_root, _ in self.rounded_cam_data_sets.items():
             indices[camera_root] = 0
 
-        active_date = get_active_date(indices, self.cam_data_sets)
+        active_date = get_active_date(indices, self.rounded_cam_data_sets)
         date_site_builder = self._next_archive_builder(active_date)
         while active_date:
             next_date = self._handle_date(indices, active_date, date_site_builder)
@@ -354,7 +355,8 @@ class CamSiteBuilder:
         """
         if next_date:
             self.archive_pages.add(next_date)
-            return DateSiteBuilder(self.project_name, next_date, self.cam_data_sets.keys(), self.output_directory)
+            return DateSiteBuilder(self.project_name, next_date, self.rounded_cam_data_sets.keys(),
+                                   self.output_directory)
         else:
             return None
 
@@ -375,18 +377,18 @@ class CamSiteBuilder:
         pictures_to_add = {}
         to_be_deleted = []
         for key, value in indices.items():
-            if self.cam_data_sets[key].contents[value].time.date() == active_date:
-                pictures_to_add[key] = self.cam_data_sets[key].contents[value]
+            if self.rounded_cam_data_sets[key].contents[value].time.date() == active_date:
+                pictures_to_add[key] = self.rounded_cam_data_sets[key].contents[value]
                 indices[key] += 1
-                if indices[key] == len(self.cam_data_sets[key].contents):
+                if indices[key] == len(self.rounded_cam_data_sets[key].contents):
                     to_be_deleted.append(key)
         for key in to_be_deleted:
             del indices[key]
         for cam, picture in pictures_to_add.items():
-            archive_page_builder.add(self.cam_data_sets[cam].name, cam, picture)
+            archive_page_builder.add(self.rounded_cam_data_sets[cam].name, cam, picture)
 
         # Update indices
-        return get_active_date(indices, self.cam_data_sets)
+        return get_active_date(indices, self.rounded_cam_data_sets)
 
     @staticmethod
     def _add_date(parent: div, to_add: date) -> None:
