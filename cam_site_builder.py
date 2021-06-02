@@ -1,11 +1,12 @@
 """Creates the actual cam site.
 """
+from calendar import monthrange
 from datetime import datetime, date, timedelta
 from os import path, listdir
 from typing import Collection, Dict, Optional, Sequence
 
 from dominate import document
-from dominate.tags import a, div, h1, img, h2, p
+from dominate.tags import a, div, h1, img, h2, p, table, tr, td, tbody
 
 from cam_file import build_path, build_file_name, IMAGES_DIRECTORY
 from cam_site_data import PictureData, CamData
@@ -314,8 +315,7 @@ class CamSiteBuilder:
         doc.add(list_block)
 
         self.create_archive_pages()
-        for active_date in sorted(self.archive_pages):
-            self._add_date(list_block, active_date)
+        self.create_archive(list_block)
 
         with open(path.join(self.output_directory, 'index.html'), 'w') as f:
             f.write(doc.render())
@@ -389,6 +389,62 @@ class CamSiteBuilder:
 
         # Update indices
         return get_active_date(indices, self.rounded_cam_data_sets)
+
+    def create_archive(self, list_block: div) -> None:
+        dates = sorted(self.archive_pages)
+        date_index = 0
+
+        while date_index < len(dates):
+            date_index = CamSiteBuilder._add_month(list_block, dates, date_index)
+
+    @staticmethod
+    def _add_month(list_block: div, dates: Sequence[date], start_index: int) -> int:
+        date_index = start_index
+        start_date = dates[date_index]
+
+        month = start_date.month
+        year = start_date.year
+
+        week_day_index, days_in_month = monthrange(year, month)
+
+        with list_block:
+            h2("{} {}".format(month, year))
+            with table().add(tbody()):
+                return CamSiteBuilder._fill_table(dates, date_index, days_in_month, week_day_index)
+
+    @staticmethod
+    def _fill_table(dates, date_index, days_in_month, week_day_index) -> int:
+        month = dates[date_index].month
+        current_row = tr()
+        for i in range(week_day_index):
+            current_row += td()
+
+        for i in range(1, days_in_month + 1):
+            week_day_index += 1
+            if i == dates[date_index].day:
+                current_row += td(
+                    a(
+                        i,
+                        href=date_site_name(dates[date_index])
+                    )
+                )
+                date_index += 1
+                if date_index == len(dates) or dates[date_index].month != month:
+                    break
+            else:
+                current_row += td(i)
+            if week_day_index % 7 == 0:
+                current_row = tr()
+
+        day = dates[date_index - 1].day
+        while week_day_index % 7 != 0 or day < days_in_month:
+            text = "" if day > days_in_month else day
+            current_row += td(text)
+            week_day_index += 1
+            day += 1
+            if week_day_index % 7 == 0:
+                current_row = tr()
+        return date_index
 
     @staticmethod
     def _add_date(parent: div, to_add: date) -> None:
