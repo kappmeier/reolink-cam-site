@@ -3,10 +3,11 @@
 from calendar import monthrange
 from datetime import datetime, date, timedelta
 from os import path, listdir
+from shutil import copy
 from typing import Collection, Dict, Optional, Sequence
 
 from dominate import document
-from dominate.tags import a, div, h1, img, h2, p, table, tr, td, tbody
+from dominate.tags import a, div, h1, img, link, h2, p, table, tr, td, tbody
 
 from cam_file import build_path, build_file_name, IMAGES_DIRECTORY
 from cam_site_data import PictureData, CamData
@@ -304,7 +305,12 @@ class CamSiteBuilder:
 
         Builds the landing page and archive pages for all available images.
         """
+        copy("style.css", path.join(self.output_directory, 'style.css'))
         doc = document(self.project_name)
+
+        with doc.head:
+            link(rel='stylesheet', href='style.css')
+
         doc.add(h1("Almost live view"))
 
         new_block = self._create_live_block()
