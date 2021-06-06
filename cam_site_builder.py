@@ -7,7 +7,7 @@ from shutil import copy
 from typing import Collection, Dict, Optional, Sequence
 
 from dominate import document
-from dominate.tags import a, div, h1, img, link, h2, p, table, tr, td, tbody
+from dominate.tags import a, div, h1, img, link, h2, p, table, tr, td, tbody, th, thead
 
 from cam_file import build_path, build_file_name, IMAGES_DIRECTORY
 from cam_site_data import PictureData, CamData
@@ -415,15 +415,28 @@ class CamSiteBuilder:
 
         with list_block:
             h2("{} {}".format(month, year))
-            with table().add(tbody()):
-                return CamSiteBuilder._fill_table(dates, date_index, days_in_month, week_day_index)
+
+            with table(cls="calendar"):
+                with thead():
+                    tr(
+                        th("Mo", cls="workday"),
+                        th("Di", cls="workday"),
+                        th("Mi", cls="workday"),
+                        th("Do", cls="workday"),
+                        th("Fr", cls="workday"),
+                        th("Sa", cls="workday"),
+                        th("So", cls="weekend"),
+                        cls="names"
+                       )
+                with tbody():
+                    return CamSiteBuilder._fill_table(dates, date_index, days_in_month, week_day_index)
 
     @staticmethod
     def _fill_table(dates, date_index, days_in_month, week_day_index) -> int:
         month = dates[date_index].month
         current_row = tr()
         for i in range(week_day_index):
-            current_row += td()
+            current_row += td(cls="workday" if week_day_index % 7 < 6 else "weekend")
 
         for i in range(1, days_in_month + 1):
             week_day_index += 1
@@ -432,20 +445,21 @@ class CamSiteBuilder:
                     a(
                         i,
                         href=date_site_name(dates[date_index])
-                    )
+                    ),
+                    cls="workday" if week_day_index % 7 < 6 else "weekend"
                 )
                 date_index += 1
                 if date_index == len(dates) or dates[date_index].month != month:
                     break
             else:
-                current_row += td(i)
+                current_row += td(i, cls="workday" if week_day_index % 7 < 6 else "weekend")
             if week_day_index % 7 == 0:
                 current_row = tr()
 
         day = dates[date_index - 1].day
         while week_day_index % 7 != 0 or day < days_in_month:
             text = "" if day > days_in_month else day
-            current_row += td(text)
+            current_row += td(text, cls="workday" if week_day_index % 7 < 6 else "weekend")
             week_day_index += 1
             day += 1
             if week_day_index % 7 == 0:

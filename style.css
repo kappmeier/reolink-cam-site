@@ -1,3 +1,41 @@
 body {
   font-family: Verdana, sans-serif;
 }
+
+table.calendar  {
+  width: 280px;
+  display: grid;
+  #border-collapse: collapse;
+  #min-width: 100%;
+  grid-template-columns: repeat(7, 1fr)
+}
+
+.calendar thead, tbody, tr {
+  display: contents;
+}
+
+.calendar th, td
+{
+  #display: table;
+  height: 40px;
+  text-align: center;
+  #vertical-align: middle;
+  display: grid;
+  align-items: center;
+}
+
+.calendar th.workday {
+	background: #dddddd;
+}
+
+.calendar th.weekend {
+	background: #bbbbbb;
+}
+
+.calendar td.workday {
+	background: #eeeeee;
+}
+
+.calendar td.weekend {
+	background: #cccccc;
+}
