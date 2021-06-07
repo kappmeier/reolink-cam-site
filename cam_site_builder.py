@@ -398,20 +398,35 @@ class CamSiteBuilder:
 
     def create_archive(self, list_block: div) -> None:
         dates = sorted(self.archive_pages)
-        date_index = 0
+        calendar_builder = CalendarTableBuilder(dates)
+        calendar_builder.build(list_block)
 
-        while date_index < len(dates):
-            date_index = CamSiteBuilder._add_month(list_block, dates, date_index)
 
-    @staticmethod
-    def _add_month(list_block: div, dates: Sequence[date], start_index: int) -> int:
-        date_index = start_index
-        start_date = dates[date_index]
+class CalendarTableBuilder:
+    """Builds a sequence of calendars linked to archive pages.
+
+    """
+
+    def __init__(self, dates: Sequence[date]) -> None:
+        self.dates = dates
+        self.date_index = 0
+
+    def build(self, list_block: div):
+        """Creates the calendar table and adds it to a parent block.
+
+        :return:
+        """
+        self.date_index = 0
+        while self.date_index < len(self.dates):
+            self._add_month(list_block)
+
+    def _add_month(self, list_block: div) -> None:
+        start_date = self.dates[self.date_index]
 
         month = start_date.month
         year = start_date.year
 
-        week_day_index, days_in_month = monthrange(year, month)
+        self.week_day_index, self.days_in_month = monthrange(year, month)
 
         with list_block:
             h2("{} {}".format(month, year))
@@ -427,51 +442,63 @@ class CamSiteBuilder:
                         th("Sa", cls="workday"),
                         th("So", cls="weekend"),
                         cls="names"
-                       )
+                    )
                 with tbody():
-                    return CamSiteBuilder._fill_table(dates, date_index, days_in_month, week_day_index)
+                    self._fill_table()
 
-    @staticmethod
-    def _fill_table(dates, date_index, days_in_month, week_day_index) -> int:
-        month = dates[date_index].month
+    def __advance_row(self, current_row: tr) -> tr:
+        self.week_day_index += 1
+        return tr() if self.week_day_index % 7 == 0 else current_row
+
+    def __add_element(self, current_row: tr, content) -> None:
+        cls = "workday" if self.week_day_index % 7 < 6 else "weekend"
+        current_row += td(content, cls=cls)
+
+    def __fill_initial_skip(self) -> tr:
         current_row = tr()
-        for i in range(week_day_index):
-            current_row += td(cls="workday" if week_day_index % 7 < 6 else "weekend")
+        for i in range(self.week_day_index):
+            self.__add_element(current_row, "")
+        return current_row
 
-        for i in range(1, days_in_month + 1):
-            week_day_index += 1
-            if i == dates[date_index].day:
-                current_row += td(
-                    a(
-                        i,
-                        href=date_site_name(dates[date_index])
-                    ),
-                    cls="workday" if week_day_index % 7 < 6 else "weekend"
-                )
-                date_index += 1
-                if date_index == len(dates) or dates[date_index].month != month:
-                    break
+    def __fill_days_in_month(self, month: int, current_row: tr) -> tr:
+        for i in range(1, self.days_in_month + 1):
+            if i == self.dates[self.date_index].day:
+                link_to_archive = a(i, href=date_site_name(self.dates[self.date_index]))
+                self.__add_element(current_row, link_to_archive)
+                self.date_index += 1
+                if self.date_index == len(self.dates) or self.dates[self.date_index].month != month:
+                    return self.__advance_row(current_row)
             else:
-                current_row += td(i, cls="workday" if week_day_index % 7 < 6 else "weekend")
-            if week_day_index % 7 == 0:
-                current_row = tr()
+                self.__add_element(current_row, i)
+            current_row = self.__advance_row(current_row)
+        raise AssertionError("No entry for month {}".format(month))
 
-        day = dates[date_index - 1].day
-        while week_day_index % 7 != 0 or day < days_in_month:
-            text = "" if day > days_in_month else day
-            current_row += td(text, cls="workday" if week_day_index % 7 < 6 else "weekend")
-            week_day_index += 1
+    def __fill_terminal_skip(self, day: int, current_row: tr) -> None:
+        while self.week_day_index % 7 != 0 or day < self.days_in_month:
+            text = "" if day > self.days_in_month else day
+            self.__add_element(current_row, text)
             day += 1
-            if week_day_index % 7 == 0:
-                current_row = tr()
-        return date_index
+            current_row = self.__advance_row(current_row)
+
+    def _fill_table(self) -> None:
+        """Fills table for a single month.
+
+        Expects an open dominate tag.
+        """
+        current_row = self.__fill_initial_skip()
+
+        month = self.dates[self.date_index].month
+        current_row = self.__fill_days_in_month(month, current_row)
+
+        day = self.dates[self.date_index - 1].day + 1
+        self.__fill_terminal_skip(day, current_row)
 
     @staticmethod
     def _add_date(parent: div, to_add: date) -> None:
         """Adds a link to an archive page for a date.
 
         >>> parent_entity = div()
-        >>> CamSiteBuilder._add_date(parent_entity, date(2021, 3, 21))
+        >>> CalendarTableBuilder._add_date(parent_entity, date(2021, 3, 21))
         >>> print(parent_entity)
         <div>
           <p>
