@@ -1,5 +1,23 @@
+html {
+  height:100%;
+}
+
 body {
-  font-family: Verdana, sans-serif;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  background-color: #E0E0E0;
+  text-align:left;
+}
+
+/* Root area */
+body .site {
+  width:100%;
+  max-width:960px;
+  margin:48px auto;
+  padding: 48px 40px;
+  background-color:#FFFFFF
 }
 
 table.calendar  {

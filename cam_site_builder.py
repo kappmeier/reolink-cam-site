@@ -82,15 +82,14 @@ class ImageBlock:
 
     def _init_for_full(self):
         parent_div = div()
-        table_div = div(style="display:table;width=100%")
+        table_div = div(cls="cam-wrapper")
 
         with parent_div:
             h2(str(self.for_time))
         parent_div.add(table_div)
 
-        width = int(100 / len(self.cameras))
         for camera in self.cameras:
-            camera_div = div(_style="display:table-cell;width:{}%;height:512px".format(width))
+            camera_div = div()
             self._picture_divs[camera] = camera_div
             table_div.add(camera_div)
         return parent_div
@@ -311,14 +310,15 @@ class CamSiteBuilder:
         with doc.head:
             link(rel='stylesheet', href='style.css')
 
-        doc.add(h1("Almost live view"))
+        with doc.add(div(cls="site")) as site:
+            site.add(h1("Almost live view"))
 
-        new_block = self._create_live_block()
-        doc.add(new_block.parent_div)
+            new_block = self._create_live_block()
+            site.add(new_block.parent_div)
 
-        doc.add(h1("Archive"))
-        list_block = div()
-        doc.add(list_block)
+            site.add(h1("Archive"))
+            list_block = div()
+            site.add(list_block)
 
         self.create_archive_pages()
         self.create_archive(list_block)
