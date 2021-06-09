@@ -125,7 +125,7 @@ def _add_image(parent_block: div, camera_root: str, name: str, picture: PictureD
 
         a(
             img(
-                _style="width:100%; height:100%",
+                _style="width:100%",
                 src=thumbnail
             ),
             href=image_src

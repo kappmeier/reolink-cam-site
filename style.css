@@ -20,6 +20,11 @@ body .site {
   background-color:#FFFFFF
 }
 
+.cam-wrapper {
+  display: grid;
+  grid-auto-flow: column;
+}
+
 table.calendar  {
   width: 280px;
   display: grid;
