@@ -2,12 +2,13 @@
 """
 from calendar import monthrange
 from datetime import datetime, date, timedelta
+from locale import setlocale, LC_TIME
 from os import path, listdir
 from shutil import copy
 from typing import Collection, Dict, Optional, Sequence
 
 from dominate import document
-from dominate.tags import a, div, h1, img, link, h2, p, table, tr, td, tbody, th, thead
+from dominate.tags import a, div, h1, h2, h3, img, link, p, table, tr, td, tbody, th, thead
 
 from cam_file import build_path, build_file_name, IMAGES_DIRECTORY
 from cam_site_data import PictureData, CamData
@@ -410,6 +411,7 @@ class CalendarTableBuilder:
     def __init__(self, dates: Sequence[date]) -> None:
         self.dates = dates
         self.date_index = 0
+        setlocale(LC_TIME, 'de_DE.UTF-8')
 
     def build(self, list_block: div):
         """Creates the calendar table and adds it to a parent block.
@@ -417,10 +419,32 @@ class CalendarTableBuilder:
         :return:
         """
         self.date_index = 0
+        last_year = 0
+        year_block = None
         while self.date_index < len(self.dates):
-            self._add_month(list_block)
+            current_year = self.dates[self.date_index].year
+            if current_year != last_year:
+                last_year = current_year
+                year_block = self._create_year_block(list_block)
+            self._add_month(year_block)
 
-    def _add_month(self, list_block: div) -> None:
+    def _create_year_block(self, parent_block: div) -> div:
+        year = self.dates[self.date_index].year
+        parent_block.add(h2(year))
+        year_block = div(cls="container-year")
+        parent_block.add(year_block)
+        return year_block
+
+    def _add_month(self, parent_block: div) -> None:
+        """Adds the content for a single month. The month consists of
+
+        <div>
+          <h2>Month name</h2>
+          <table>Calendar content</table>
+        </div>
+
+        :param parent_block: a container that the month will be added to
+        """
         start_date = self.dates[self.date_index]
 
         month = start_date.month
@@ -428,8 +452,8 @@ class CalendarTableBuilder:
 
         self.week_day_index, self.days_in_month = monthrange(year, month)
 
-        with list_block:
-            h2("{} {}".format(month, year))
+        with parent_block.add(div()):
+            h3(start_date.strftime("%B"))
 
             with table(cls="calendar"):
                 with thead():
