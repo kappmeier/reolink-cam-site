@@ -7,8 +7,9 @@ input for the create_cam_site.py script.
 Usage:
   prepare_cam_site.py --root "/data/camera-storage" --web-root ./out --cameras camera-front camera-back
 """
+from datetime import date
 from os import path
-from typing import List
+from typing import List, Optional
 
 from tap import Tap
 
@@ -32,9 +33,16 @@ class PrepareCamArguments(Tap):
     contain the content produced by ReoLink software (in year/month/day sub
     folders). They are read and used to process the images and thumbnails.
     """
+    date: Optional[date]  # Load images for a certain date.
+    """The date is specified in ISO format `YYYY-MM-DD`.
+    """
 
     def __init__(self, *args):
         super().__init__(args, underscores_to_dashes=True)
+
+    def configure(self):
+        """Define complex parameters."""
+        self.add_argument('--date', required=False, type=date.fromisoformat)
 
 
 def _get_arguments() -> PrepareCamArguments:
@@ -48,7 +56,7 @@ def prepare_cam_site(configuration: PrepareCamArguments):
 
     :param configuration: the parameters required to run the preparation
     """
-    cam_datasets = load_cam_data(configuration.root, configuration.cameras)
+    cam_datasets = load_cam_data(configuration.root, configuration.cameras, configuration.date)
 
     print("Preparing website for {} cameras".format(len(cam_datasets)))
 
