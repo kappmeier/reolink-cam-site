@@ -295,7 +295,7 @@ class CamSiteBuilder:
         """
         new_block = ImageBlock(datetime.now(), self.cam_data_sets.keys(), style='full')
         for camera_root, cam_data in self.cam_data_sets.items():
-            current_picture = cam_data.contents[-1]
+            current_picture = max(cam_data.contents)
             parent_block = new_block.picture_div(camera_root)
             _add_image(parent_block, camera_root, cam_data.name, current_picture, use_thumbnail=False)
         return new_block
