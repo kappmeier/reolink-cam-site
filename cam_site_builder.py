@@ -411,6 +411,9 @@ class CalendarTableBuilder:
     def __init__(self, dates: Sequence[date]) -> None:
         self.dates = dates
         self.date_index = 0
+        self._year = 0
+        self._month = 0
+        self._today = date.today()
         setlocale(LC_TIME, 'de_DE.UTF-8')
 
     def build(self, list_block: div):
@@ -422,9 +425,9 @@ class CalendarTableBuilder:
         last_year = 0
         year_block = None
         while self.date_index < len(self.dates):
-            current_year = self.dates[self.date_index].year
-            if current_year != last_year:
-                last_year = current_year
+            self._year = self.dates[self.date_index].year
+            if self._year != last_year:
+                last_year = self._year
                 year_block = self._create_year_block(list_block)
             self._add_month(year_block)
 
@@ -447,10 +450,9 @@ class CalendarTableBuilder:
         """
         start_date = self.dates[self.date_index]
 
-        month = start_date.month
-        year = start_date.year
+        self._month = start_date.month
 
-        self.week_day_index, self.days_in_month = monthrange(year, month)
+        self.week_day_index, self.days_in_month = monthrange(self._year, self._month)
 
         with parent_block.add(div()):
             h3(start_date.strftime("%B"))
@@ -474,35 +476,41 @@ class CalendarTableBuilder:
         self.week_day_index += 1
         return tr() if self.week_day_index % 7 == 0 else current_row
 
-    def __add_element(self, current_row: tr, content) -> None:
+    def __add_element(self, current_row: tr, content, current: bool) -> None:
         cls = "workday" if self.week_day_index % 7 < 6 else "weekend"
+        if current:
+            today_div = div(content, cls="today")
+            content = today_div
         current_row += td(content, cls=cls)
 
     def __fill_initial_skip(self) -> tr:
         current_row = tr()
         for i in range(self.week_day_index):
-            self.__add_element(current_row, "")
+            self.__add_element(current_row, "", False)
         return current_row
 
-    def __fill_days_in_month(self, month: int, current_row: tr) -> tr:
+    def __fill_days_in_month(self, current_row: tr) -> tr:
         for i in range(1, self.days_in_month + 1):
             if i == self.dates[self.date_index].day:
                 link_to_archive = a(i, href=date_site_name(self.dates[self.date_index]))
-                self.__add_element(current_row, link_to_archive)
+                self.__add_element(current_row, link_to_archive, self.__is_today(i))
                 self.date_index += 1
-                if self.date_index == len(self.dates) or self.dates[self.date_index].month != month:
+                if self.date_index == len(self.dates) or self.dates[self.date_index].month != self._month:
                     return self.__advance_row(current_row)
             else:
-                self.__add_element(current_row, i)
+                self.__add_element(current_row, i, self.__is_today(i))
             current_row = self.__advance_row(current_row)
-        raise AssertionError("No entry for month {}".format(month))
+        raise AssertionError("No entry for month {}".format(self._month))
 
     def __fill_terminal_skip(self, day: int, current_row: tr) -> None:
         while self.week_day_index % 7 != 0 or day < self.days_in_month:
             text = "" if day > self.days_in_month else day
-            self.__add_element(current_row, text)
+            self.__add_element(current_row, text, self.__is_today(day))
             day += 1
             current_row = self.__advance_row(current_row)
+
+    def __is_today(self, day: int) -> bool:
+        return self._year == self._today.year and self._month == self._today.month and self._today.day == day
 
     def _fill_table(self) -> None:
         """Fills table for a single month.
@@ -511,8 +519,7 @@ class CalendarTableBuilder:
         """
         current_row = self.__fill_initial_skip()
 
-        month = self.dates[self.date_index].month
-        current_row = self.__fill_days_in_month(month, current_row)
+        current_row = self.__fill_days_in_month(current_row)
 
         day = self.dates[self.date_index - 1].day + 1
         self.__fill_terminal_skip(day, current_row)

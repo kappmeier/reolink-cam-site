@@ -108,3 +108,13 @@ table.calendar  {
 .calendar td.weekend {
 	background: #cccccc;
 }
+
+.today {
+    text-align: center;
+	background: #800000;
+	color: #eeeeee;
+	width: 32px;
+	line-height: 32px;
+	height: 32px;
+	border-radius: 50%;
+}
