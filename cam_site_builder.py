@@ -165,6 +165,8 @@ class DateSiteBuilder:
         self.cameras = cameras
         self.output_directory = output_directory
         self.doc = document(title="{} - {}".format(project_name, for_date))
+        with self.doc.head:
+            link(rel='stylesheet', href='style.css')
         self.times = {}
         """Contains the blocks for one datetime entry."""
 
@@ -186,8 +188,9 @@ class DateSiteBuilder:
         :return:
         """
         print("Finalize output")
-        for time, tag in sorted(self.times.items()):
-            self.doc.add(tag.parent_div)
+        with self.doc.add(div(cls="site")) as site:
+            for time, tag in sorted(self.times.items()):
+                site.add(tag.parent_div)
 
         output_file_name = path.join(self.output_directory, date_site_name(self.for_date))
         print("Writing {}".format(output_file_name))
