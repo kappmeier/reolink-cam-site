@@ -5,7 +5,7 @@ from datetime import datetime, date, timedelta
 from locale import setlocale, LC_TIME
 from os import path, listdir
 from shutil import copy
-from typing import Collection, Dict, Optional, Sequence
+from typing import Callable, Collection, Dict, Optional, Sequence
 
 from dominate import document
 from dominate.tags import a, div, h1, h2, h3, img, link, p, table, tr, td, tbody, th, thead
@@ -61,15 +61,18 @@ class ImageBlock:
     `div` element that can be accessed and filled elsewhere.
     """
 
-    def __init__(self, for_time: datetime, cameras: Collection[str], style: str) -> None:
+    def __init__(self, for_time: datetime, cameras: Collection[str], style: str,
+                 time_format: Callable[[datetime], str]) -> None:
         """
 
         :param for_time:
         :param cameras:
         :param style: the style. 'full' for 100% wide, 'float' for floating images next to each other
+        :param time_format: formats the time to the header
         """
         self.for_time = for_time
         self.cameras = cameras
+        self.time_format = time_format
         self._picture_divs = {}
         if style == 'float':
             self.parent_div = self._init_for_float()
@@ -86,7 +89,7 @@ class ImageBlock:
         table_div = div(cls="cam-wrapper")
 
         with parent_div:
-            h2(str(self.for_time))
+            h2(self.time_format(self.for_time))
         parent_div.add(table_div)
 
         for camera in self.cameras:
@@ -99,7 +102,7 @@ class ImageBlock:
         parent_div = div(_style="overflow:hidden")
 
         with parent_div:
-            h2(str(self.for_time))
+            h2(self.time_format(self.for_time))
         for camera in self.cameras:
             camera_div = div(_style="float:left")
             self._picture_divs[camera] = camera_div
@@ -152,7 +155,8 @@ class DateSiteBuilder:
         if key in self.times:
             return self.times[key]
         else:
-            new_block = ImageBlock(key, self.cameras, style='float')
+            new_block = ImageBlock(key, self.cameras, style='float',
+                                   time_format=lambda time: datetime.strftime(time, '%H:%M'))
             self.times[key] = new_block
             return new_block
 
@@ -189,6 +193,7 @@ class DateSiteBuilder:
         """
         print("Finalize output")
         with self.doc.add(div(cls="site")) as site:
+            site.add(h1("Archiv {}".format(str(self.for_date))))
             for time, tag in sorted(self.times.items()):
                 site.add(tag.parent_div)
 
@@ -296,7 +301,8 @@ class CamSiteBuilder:
 
         :return: an `ImageBlock` instance with the latest images
         """
-        new_block = ImageBlock(datetime.now(), self.cam_data_sets.keys(), style='full')
+        new_block = ImageBlock(datetime.now(), self.cam_data_sets.keys(), style='full',
+                               time_format=lambda time: datetime.strftime(time, '%Y-%m-%d %H:%M'))
         for camera_root, cam_data in self.cam_data_sets.items():
             current_picture = max(cam_data.contents)
             parent_block = new_block.picture_div(camera_root)
@@ -315,12 +321,12 @@ class CamSiteBuilder:
             link(rel='stylesheet', href='style.css')
 
         with doc.add(div(cls="site")) as site:
-            site.add(h1("Almost live view"))
+            site.add(h1("Aktuell"))
 
             new_block = self._create_live_block()
             site.add(new_block.parent_div)
 
-            site.add(h1("Archive"))
+            site.add(h1("Archiv"))
             list_block = div()
             site.add(list_block)
 
