@@ -1,3 +1,6 @@
 # Python related files
-
 __pycache__
+
+# Developing
+.idea/
+venv**/
