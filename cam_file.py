@@ -114,9 +114,9 @@ def extract_by_type(files: Sequence[str], for_date: date) -> CamData:
 
 
 def _iterate_image_directories(camera_path: str) -> Iterator[Tuple[Sequence[str], date]]:
-    """Iterates images in sub directories per date.
+    """Iterates images in subdirectories per date.
 
-    All sub directories of the form `camera_path/year/month/day` are iterated.
+    All subdirectories of the form `camera_path/year/month/day` are iterated.
     The yielded result contains all files in a directory together with its
     date.
 
