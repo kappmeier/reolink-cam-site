@@ -252,6 +252,9 @@ def round_to(contents: Sequence[PictureData], minutes: int) -> Sequence[PictureD
             candidate = rounded
             candidate_diff = abs((image.time - rounded).total_seconds())
 
+    if len(result) == 0 and candidate is not None:
+        result.append(candidate_picture)
+
     print("Rounded {} to {} points.".format(len(contents), len(result)))
 
     return result
