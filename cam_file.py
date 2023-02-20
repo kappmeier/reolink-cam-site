@@ -295,6 +295,9 @@ def _combine_proximate(contents: Sequence[PictureData]) -> Sequence[Sequence[Pic
                 skip_count += _add_if_proximate(candidate, image, result)
                 candidate = None
 
+    if candidate is not None:
+        skip_count += _add_if_proximate(candidate, image, result)
+
     if skip_count > 0:
         print("Skipped {} images".format(skip_count))
 
