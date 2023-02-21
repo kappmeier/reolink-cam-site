@@ -110,7 +110,7 @@ def extract_by_type(files: Sequence[str], for_date: date) -> CamData:
     for entry in as_tuple:
         as_dict[entry[0]].append(entry[1])
 
-    return CamData(next(iter(prefix)), [PictureData(time, types) for time, types in sorted(as_dict.items())])
+    return CamData(next(iter(prefix)), sorted([PictureData(time, types) for time, types in sorted(as_dict.items())]))
 
 
 def _iterate_image_directories(camera_path: str) -> Iterator[Tuple[Sequence[str], date]]:
@@ -256,11 +256,11 @@ PictureData(time=datetime.datetime(2021, 3, 13, 0, 0, 11), types=['mp4'])]]
     """
     difference = (image.time - candidate.time).total_seconds()
     if difference < 10:
-        result.append([candidate, image])
-        return 0
-    else:
         print("Skipping pair with {} seconds difference".format(difference))
         return 1
+    else:
+        result.append([candidate, image])
+        return 0
 
 
 def _combine_proximate(contents: Sequence[PictureData]) -> Sequence[Sequence[PictureData]]:
