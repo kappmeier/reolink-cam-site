@@ -223,7 +223,7 @@ def load_cam_data(root: str, cameras: Sequence[str], for_date: date = None) -> D
     `root/camera_root/year/month/day/pictures.{jpg,mp4}`.
 
     If the date is present, only images for the specified date are loaded.
-    Otherwise the whole directory is traversed.
+    Otherwise, the whole directory is traversed.
 
     :param root: root directory for the camera data
     :param cameras: cameras for image loading, subdirectories in the root
@@ -356,17 +356,17 @@ def create_symlink(root: str, web_root: str, cam_name: str, pictures: Sequence[P
 
     for picture in pictures:
         for file_type in picture.types:
-            symlink_file = path.join(web_root, symlinks_file_relative, symlinks_file_name + "." + file_type)
+            target_file = path.join(web_root, symlinks_file_relative, symlinks_file_name + "." + file_type)
 
-            original_image_path = build_path(root, picture)
-            original_image_file_name = build_file_name(cam_name, picture)
-            original_image_symlink = path.join(original_image_path, original_image_file_name + "." + file_type)
+            source_image_path = build_path(root, picture)
+            source_image_file_name = build_file_name(cam_name, picture)
+            source_image_symlink = path.join(source_image_path, source_image_file_name + "." + file_type)
 
             try:
-                symlink(original_image_symlink, symlink_file)
+                symlink(path.abspath(source_image_symlink), target_file)
             except FileNotFoundError:
-                makedirs(path.dirname(symlink_file))
-                symlink(original_image_symlink, symlink_file)
+                makedirs(path.dirname(target_file))
+                symlink(path.abspath(source_image_symlink), target_file)
             except FileExistsError:
                 # We ignore existing links
                 pass
