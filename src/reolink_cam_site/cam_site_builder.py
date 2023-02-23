@@ -12,14 +12,15 @@ from datetime import datetime, date, timedelta
 from locale import setlocale, LC_TIME
 from os import path, listdir
 from shutil import copy
+from sys import modules
 from typing import Callable, Collection, Dict, Optional, Sequence
 
 from dominate import document
 from dominate.tags import a, div, h1, h2, h3, img, link, p, table, tr, td, tbody, th, thead
 
-from cam_file import build_path, build_file_name, IMAGES_DIRECTORY
-from cam_site_data import PictureData, CamData
-from thumbnails import THUMBNAIL_DIRECTORY
+from reolink_cam_site.cam_file import build_path, build_file_name, IMAGES_DIRECTORY
+from reolink_cam_site.cam_site_data import PictureData, CamData
+from reolink_cam_site.thumbnails import THUMBNAIL_DIRECTORY
 
 ROUND = 10
 
@@ -324,7 +325,9 @@ class CamSiteBuilder:
 
         Builds the landing page and archive pages for all available images.
         """
-        copy("style.css", path.join(self.output_directory, 'style.css'))
+        package_directory = modules['reolink_cam_site'].__path__[0]
+        copy(path.join(package_directory, 'style.css'),
+             path.join(self.output_directory, 'style.css'))
         doc = document(self.project_name)
 
         with doc.head:

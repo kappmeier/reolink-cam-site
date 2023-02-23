@@ -17,7 +17,7 @@ from os import makedirs, path, sep, symlink, walk
 from re import compile
 from typing import Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
-from cam_site_data import CamData, PictureData
+from reolink_cam_site.cam_site_data import CamData, PictureData
 
 IMAGES_DIRECTORY = "images"
 """The image directory in the web root."""

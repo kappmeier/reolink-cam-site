@@ -20,8 +20,8 @@ from typing import List, Optional
 
 from tap import Tap
 
-from cam_file import load_cam_data, create_symlinks, IMAGES_DIRECTORY
-from thumbnails import create_thumbnails
+from reolink_cam_site.cam_file import load_cam_data, create_symlinks, IMAGES_DIRECTORY
+from reolink_cam_site.thumbnails import create_thumbnails
 
 
 class PrepareCamArguments(Tap):

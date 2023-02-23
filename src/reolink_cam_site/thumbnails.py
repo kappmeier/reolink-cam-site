@@ -10,8 +10,8 @@ in compliance with the License. You may obtain a copy of the License at
 from os import makedirs, path
 from PIL import Image
 
-from cam_file import build_path, build_file_name
-from cam_site_data import PictureData, CamData
+from reolink_cam_site.cam_file import build_path, build_file_name
+from reolink_cam_site.cam_site_data import PictureData, CamData
 
 THUMBNAIL_DIRECTORY = "thumbnails"
 """Directory for thumbnails under web root."""

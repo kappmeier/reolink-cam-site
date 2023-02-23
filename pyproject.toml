@@ -34,5 +34,8 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-prepare-cam-site = "prepare_cam_site:main"
-create-cam-site = "create_cam_site:main"
+prepare-cam-site = "reolink_cam_site.prepare_cam_site:main"
+create-cam-site = "reolink_cam_site.create_cam_site:main"
+
+[tool.setuptools.package-data]
+"reolink_cam_site" = ["style.css"]

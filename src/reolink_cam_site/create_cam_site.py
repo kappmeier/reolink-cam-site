@@ -19,8 +19,8 @@ from typing import List, Sequence, Optional
 
 from tap import Tap
 
-from cam_file import load_cam_data, IMAGES_DIRECTORY
-from cam_site_builder import CamSiteBuilder
+from reolink_cam_site.cam_file import load_cam_data, IMAGES_DIRECTORY
+from reolink_cam_site.cam_site_builder import CamSiteBuilder
 
 
 class CreateCamArgumentParser(Tap):
