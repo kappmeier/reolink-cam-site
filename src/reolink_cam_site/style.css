@@ -8,11 +8,11 @@ in compliance with the License. You may obtain a copy of the License at
 */
 /* Reset */
 html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	font-size: 100%;
-	vertical-align: baseline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  vertical-align: baseline;
 }
 
 html {
@@ -82,8 +82,6 @@ a:visited {
 table.calendar  {
   width: 280px;
   display: grid;
-  #border-collapse: collapse;
-  #min-width: 100%;
   grid-template-columns: repeat(7, 1fr)
 }
 
@@ -93,36 +91,34 @@ table.calendar  {
 
 .calendar th, td
 {
-  #display: table;
   height: 40px;
   text-align: center;
-  #vertical-align: middle;
   display: grid;
   align-items: center;
 }
 
 .calendar th.workday {
-	background: #dddddd;
+  background: #dddddd;
 }
 
 .calendar th.weekend {
-	background: #bbbbbb;
+  background: #bbbbbb;
 }
 
 .calendar td.workday {
-	background: #eeeeee;
+  background: #eeeeee;
 }
 
 .calendar td.weekend {
-	background: #cccccc;
+  background: #cccccc;
 }
 
 .today {
-    text-align: center;
-	background: #800000;
-	color: #eeeeee;
-	width: 32px;
-	line-height: 32px;
-	height: 32px;
-	border-radius: 50%;
+  text-align: center;
+  background: #800000;
+  color: #eeeeee;
+  width: 32px;
+  line-height: 32px;
+  height: 32px;
+  border-radius: 50%;
 }
