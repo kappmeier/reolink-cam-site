@@ -1,5 +1,7 @@
 # Python related files
 __pycache__
+build/
+src/reolink_cam_site.egg-info/
 
 # Developing
 .idea/
