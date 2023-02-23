@@ -15,7 +15,7 @@
 - One ore more [Reolink] security cameras configured to upload photos and videos.
 - Optional: to set up an FTP server: [docker].
 
-## Useage
+## Usage
 
 ### Installation
 
