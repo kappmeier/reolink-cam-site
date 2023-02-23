@@ -17,6 +17,31 @@
 
 ## Useage
 
+### Installation
+
+The software supports `setuptools` installation via `pip` and the `pyproject.toml` configuration
+file.
+
+```console
+$ pip install .
+Processing /reolink-cam-site
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... done
+Building wheels for collected packages: reolink-cam-site
+Successfully built reolink-cam-site
+Installing collected packages: reolink-cam-site
+Successfully installed reolink-cam-site-0.1.0
+$ prepare-cam-site 
+usage: () --root ROOT --web-root WEB_ROOT --cameras [CAMERAS [CAMERAS ...]] [--date DATE] [-h]
+(): error: the following arguments are required: --root, --web-root, --cameras
+$ create-cam-site 
+usage: create-cam-site --name NAME --dir DIR --cameras [CAMERAS [CAMERAS ...]] [--date DATE] [-h]
+create-cam-site: error: the following arguments are required: --name, --dir, --cameras
+```
+
+After installation the software can be accessed via `prepare-cam-site` and `create-cam-site`.
+
 ### Preparation
 
 First step to create a static cam site page. The script traverses the cameras directories in a
@@ -24,8 +49,9 @@ given root directory and creates links and thumbnails in the web root. The latte
 as input for the [creation](#creation) script.
 
 #### Usage
-```
-python3 prepare_cam_site.py \
+
+```console
+prepare-cam-site \
         --root "/data/camera-storage" \
         --web-root ./out \
         --cameras camera-front camera-back \
@@ -52,7 +78,7 @@ with images and thumbnails as produced by the [preparation](#preparation) script
 #### Usage
 
 ```console
-python3 create_cam_site.py \
+create-cam-site \
         --name "My CamSite" \
         --dir ./out \
         --cameras camera-front camera-back \
