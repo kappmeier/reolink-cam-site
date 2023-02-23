@@ -1,0 +1,38 @@
+[project]
+name = "reolink-cam-site"
+version = "0.1.0"
+description = "Cam site for Reolink security camera streams"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+keywords = ["reolink", "cam", "camera"]
+authors = [
+    { email = "jp.kappmeier@gmail.com" },
+    { name = "Jan-Philipp Kappmeier" }
+]
+classifiers = [
+    "Development Status :: 7 - Inactive",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python"
+]
+
+dependencies = [
+    "dominate==2.7.0",
+    "Pillow==9.4.0",
+    "typed-argument-parser==1.7.2"
+]
+
+[build-system]
+requires = [
+    "setuptools",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+prepare-cam-site = "prepare_cam_site:main"
+create-cam-site = "create_cam_site:main"
