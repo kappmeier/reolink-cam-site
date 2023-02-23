@@ -77,6 +77,12 @@ def prepare_cam_site(configuration: PrepareCamArguments):
         create_thumbnails(root_directory, updated_files, configuration.web_root)
 
 
-if __name__ == '__main__':
+def main():
+    """Executes the prepare_cam_site script with command line arguments.
+    """
     args = _get_arguments()
     prepare_cam_site(args)
+
+
+if __name__ == '__main__':
+    main()

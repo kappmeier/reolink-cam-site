@@ -71,6 +71,12 @@ def create_cam_site(project_name: str, web_root: str, cameras: Sequence[str], ca
     builder.create_full_site()
 
 
-if __name__ == '__main__':
+def main():
+    """Executes the create_cam_site script with command line arguments.
+    """
     args = _get_arguments()
     create_cam_site(args.name, args.dir, args.cameras, args.date)
+
+
+if __name__ == '__main__':
+    main()
