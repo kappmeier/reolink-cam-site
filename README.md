@@ -1,4 +1,7 @@
- # Reolink Cam Site
+The Reolink Cam Site scripts are no longer maintained and development has been stopped. The
+repository is archived. If you want to contribute, please create a fork.
+
+# Reolink Cam Site
 
  Builds an overview webpage based on photos and videos created by [Reolink] security cameras.
 
