@@ -15,6 +15,44 @@
 - One ore more [Reolink] security cameras configured to upload photos and videos.
 - Optional: to set up an FTP server: [docker].
 
+### Example Directory Structure
+
+The directory structure for a system with three cameras `camera-a`, `camera-b`, and `camera-c` with
+pictures starting from 2022-11-15 looks like this:
+
+```text
+├── camera-a
+│   ├── 2022
+│   │   ├── 11
+│   │   │   ├── 15
+│   │   │   │   ├── camera-a_01_20221115233531.jpg
+│   │   │   │   ├── camera-a_01_20221115233753.jpg
+│   │   │   │   └── camera-a_01_20221115234516.jpg
+│   │   │   ├── 16
+│   │   │   │   ├── camera-a_01_20221116161531.jpg
+│   │   │   │   └── camera-a_01_20221116161753.jpg
+│   │   │   ├── 17
+│   │   │   │   ├── camera-a_01_20221117085531.jpg
+│   │   │   ┆   └── camera-a_01_20221117085753.jpg
+┆   ┆   ┆   
+│   │   └── 12
+│   │       ├── 01
+│   │       ┆   ├── camera-a_01_20221201061531.jpg
+┆   ┆           ┆
+│   └── 2023
+│       ├── 01
+│       ┆   ├── 01
+┆           ┆
+└── camera-b
+    ├── 2022
+    │   ├── 11
+    │   ┆   ├── 15
+    │       │   ├── camera-c_01_20221115233531.jpg
+    │       ├── 16
+    ┆       ┆
+    └── 2023
+```
+
 ## Usage
 
 ### Installation
